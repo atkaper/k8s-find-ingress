@@ -19,7 +19,7 @@ then
    echo
    echo "The following hostnames are available:"
    echo
-   kubectl get --all-namespaces ingress -o json | jq -r '.items[].spec.rules[].host' | sort -u
+   kubectl get --all-namespaces ingress -o json | jq -r '.items[].spec.rules | select(length > 0) | .[].host' | sort -u
    exit 1
 fi
 
@@ -29,7 +29,7 @@ export HOST=$1
     echo "HOST PATH NAMESPACE SERVICE PORT INGRESS REWRITE"
     echo "---- ---- --------- ------- ---- ------- -------"
     kubectl get --all-namespaces ingress -o json | \
-        jq -r '.items[] | . as $parent | .spec.rules[] | select(.host==$ENV.HOST) | .host as $host | .http.paths[] | ( $host + " " + .path + " " + $parent.metadata.namespace + " " + .backend.service.name + " " + (.backend.service.port.number // .backend.service.port.name | tostring) + " " + $parent.metadata.name + " " + $parent.metadata.annotations."nginx.ingress.kubernetes.io/rewrite-target")' | \
+        jq -r '.items[] | . as $parent | .spec.rules | select(length > 0) | .[] | select(.host==$ENV.HOST) | .host as $host | .http.paths[] | ( $host + " " + .path + " " + $parent.metadata.namespace + " " + .backend.service.name + " " + (.backend.service.port.number // .backend.service.port.name | tostring) + " " + $parent.metadata.name + " " + $parent.metadata.annotations."nginx.ingress.kubernetes.io/rewrite-target")' | \
         sort
 ) | column -s\  -t
 
